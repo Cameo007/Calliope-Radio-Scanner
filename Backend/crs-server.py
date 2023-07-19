@@ -1,11 +1,17 @@
 import flask
-
+import flask_cors
 
 tasks = {}
 logs = []
 
 app = flask.Flask(__name__)
+flask_cors.CORS(app, resources={r"/*": {"origins": "*"}})
 
+@app.before_request
+def block_user_agent():
+    user_agent = flask.request.headers.get('User-Agent')
+    if user_agent == 'nginx-ssl early hints':
+        flask.abort(400)
 
 @app.route("/")
 def index():
