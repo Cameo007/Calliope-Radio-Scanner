@@ -16,6 +16,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Setup Libs
+      run: apt get install libudev-dev
     - name: Build
       run: cd "Rust Middleware" && cargo build --verbose
     - name: Upload a Build Artifact
