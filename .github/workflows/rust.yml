@@ -16,12 +16,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Setup Libs
-      run: sudo apt-get install libudev-dev
-    - name: Build
-      run: cd "Rust Middleware" && cargo build --verbose
-    - name: Upload a Build Artifact
+    - name: Setup
+      run: sudo apt-get install libudev-dev && rustup target add x86_64-pc-windows-gnu
+    - name: Build Linux
+      run: cd "Rust Middleware" && cargo build --release --verbose
+    - name: Build Windows
+      run: cd "Rust Middleware" && cargo build --release --target x86_64-pc-windows-gnu --verbose
+    - name: Prepare Upload
+      run: mv "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/Rust Middleware/target/release/crs" "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/build/crs" && mv "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/Rust Middleware/target/x86_64-pc-windows-gnu/release/crs.exe" "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/build/crs.exe"
+    - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3.1.2
       with:
-        name: "Build (Ubuntu)"
-        path: "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/Rust Middleware/target/debug/crs"
+        name: "Builds"
+        path: "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/build/*"
