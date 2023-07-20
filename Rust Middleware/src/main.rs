@@ -2,22 +2,19 @@ use std::time::Duration;
 use std::env;
 use std::process;
 use serde_json::Value;
+use std::time::{SystemTime, UNIX_EPOCH};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Action {
-	cmd: String,
-	text: String,
+	value: String,
 }
 
 fn main() {
 	let args: Vec<String> = env::args().collect();
 
-	/*
-	for action in get_pending_actions("0") {
-		println!("{}, {}", action.cmd, action.text);
-	}
-	*/
+	let com = "";
+	let mut channel = String::from("");
 
 	if args.len() == 2 {
 		//detect
@@ -28,7 +25,8 @@ fn main() {
 			} else {
 				for port in ports {
 					let com = port.port_name;
-					println!("{} ({})", com, get_mode(&com));
+					let mode = get_mode(&com);
+					println!("{} ({})", com, mode);
 				}
 			}
 			process::exit(0);
@@ -43,9 +41,11 @@ fn main() {
 		if args[1] == "communicator" {
 			//Communicator
 			let com = &args[2];
-			let channel = &args[3];
+			channel = args[3].to_owned();
 
-			send(com, format!("COMMUNICATOR:{channel}").as_str());
+			api_activate(&channel);
+
+			send(&com, format!("COMMUNICATOR:{channel}").as_str());
 		} else if args[1] == "scanner" {
 			//Scanner
 			let com = &args[2];
@@ -55,7 +55,7 @@ fn main() {
 		} else if args[1] == "tester" {
 			//Tester
 			let com = &args[2];
-			let channel = &args[3];
+			channel = args[3].to_owned();
 
 			send(com, format!("TESTER:{channel}").as_str());
 		} else {
@@ -65,7 +65,16 @@ fn main() {
 		help();
 	}
 
-	let com = &args[2];
+	//CTRL+C interrupt handler
+	let used_channel = channel.clone();
+	ctrlc::set_handler(move || {
+		if !used_channel.is_empty() {
+        	api_loose(&used_channel);
+		}
+		process::exit(0);
+
+    })
+    .expect("Error setting Ctrl-C handler");
 
 	let mut serial = serialport::new(com, 115_200)
 		.timeout(Duration::from_millis(10))
@@ -73,14 +82,34 @@ fn main() {
 
 	println!("Set mode");
 
+	let mut last_timestamp = SystemTime::now()
+		.duration_since(UNIX_EPOCH)
+		.unwrap()
+		.as_secs();
+
 	loop {
 		let mut line = String::from("");
 		serial.read_to_string(&mut line).ok();
 
 		if line != "" {
+			println!("{}", line);
 			let log = line.strip_suffix("\n").unwrap();
 			println!("{}", log);
 			log_to_server(log);
+
+			//Run pending actions
+			if !channel.is_empty() {
+				let new_timestamp = SystemTime::now()
+				.duration_since(UNIX_EPOCH)
+				.unwrap()
+				.as_secs();
+
+				if last_timestamp + 15 < new_timestamp {
+					last_timestamp = new_timestamp;
+					let action = api_get_next_pending_action(&channel);
+					send(com, &action.value);
+				}
+			}
 		}
 	}
 }
@@ -88,9 +117,10 @@ fn main() {
 fn get_mode(com: &str) -> String {
 	let mode = ask(com, "MODE");
 	if mode.starts_with("MODE:") {
-		return mode.split(":").nth(1).unwrap().to_owned()
+		mode.split(":").nth(1).unwrap().to_owned()
 	} else {
-		return String::from("")
+		//return String::from("")
+		mode.split(":").nth(1).unwrap().to_owned()
 	}
 }
 
@@ -98,17 +128,16 @@ fn send(com: &str, message: &str) {
 	let mut serial = serialport::new(com, 115_200)
 		.timeout(Duration::from_millis(10))
 		.open().expect("Failed to open port");
-
-	let message = String::from(message) + "\n";
-	serial.write(message.as_bytes()).expect("Write failed!");
+	serial.write((message.to_owned() + "\n").as_bytes())
+		.expect("Write failed!");
 }
 
 fn ask(com: &str, question: &str) -> String {
-	let mut serial = serialport::new(com, 115_200) 
+	send(com, question);
+
+	let mut serial = serialport::new(com, 115_200)
 		.timeout(Duration::from_millis(10))
 		.open().expect("Failed to open port");
-
-	serial.write(question.as_bytes()).expect("Write failed!");
 
 	loop {
 		let mut line = String::from("");
@@ -121,23 +150,86 @@ fn ask(com: &str, question: &str) -> String {
 }
 
 fn log_to_server(log: &str) {
-	println!("{:?}", log);
+	if log.starts_with("CHANNEL_FOUND") {
+		api_log_channel_found(log.split(":").nth(1).unwrap());
+	} else if log.starts_with("LOG") {
+		//TRAFFIC (Communicator)
+		let channel = log.split(":").nth(1).unwrap().split(";").nth(0).unwrap();
+		let content = log.split_once(":").unwrap().1.split_once(";").unwrap().1;
+		api_log(channel, content);
+	}
+
 }
 
-fn get_pending_actions(channel: &str) -> Vec<Action> {
-	let mut vector_actions: Vec<Action> = Vec::new();
 
-	let response = minreq::get("http://212.227.8.25:8123/pending/".to_owned() + channel).with_timeout(3).send().unwrap();
+fn api_activate(channel: &str) {
+	let response = minreq::get(get_api_endpoint() + "activate/" + channel)
+		.with_timeout(3)
+		.send()
+		.unwrap();
 	if response.status_code == 200 {
-		let actions: Value = serde_json::from_str(response.as_str().unwrap()).expect(&format!("Unable to parse json: {:?}", response));
-		if actions["error_id"] != "null" {
-			for action in actions.as_array().expect(&format!("Unable to parse to array: {:?}", actions)).iter() {
-				vector_actions.push(serde_json::from_value(action.to_owned()).unwrap());
-			}
+		let result: Value = serde_json::from_str(response.as_str().unwrap())
+			.expect(&format!("Unable to parse json: {:?}", response));
+		if result["error_id"].is_null() {
+			println!("{}", result["success"].as_str().unwrap());
+		} else {
+			println!("{}", result["error"].as_str().unwrap());
 		}
 	}
-	vector_actions
 }
+
+fn api_loose(channel: &str) {
+	let response = minreq::get(get_api_endpoint() + "loose/" + channel)
+		.with_timeout(3)
+		.send()
+		.unwrap();
+	if response.status_code == 200 {
+		let result: Value = serde_json::from_str(response.as_str().unwrap())
+			.expect(&format!("Unable to parse json: {:?}", response));
+		if result["error_id"].is_null() {
+			println!("{}", result["success"].as_str().unwrap());
+		} else {
+			println!("{}", result["error"].as_str().unwrap());
+		}
+	}
+}
+
+fn api_log(channel: &str, content: &str) {
+	println!("{}", get_api_endpoint() + "log/" + channel + "?value=" + content);
+	let response = minreq::get(get_api_endpoint() + "log/" + channel + "?value=" + content)
+		.with_timeout(3)
+		.send()
+		.unwrap();
+	if response.status_code == 200 {
+		let result: Value = serde_json::from_str(response.as_str().unwrap())
+			.expect(&format!("Unable to parse json: {:?}", response));
+		if !result["error_id"].is_null() {
+			println!("{}", result["error"].as_str().unwrap());
+		}
+	}
+}
+
+fn api_log_channel_found(channel: &str) {
+	api_log("-1", channel);
+}
+
+fn api_get_next_pending_action(channel: &str) -> Action {
+	let response = minreq::get(get_api_endpoint() + "pop/" + channel)
+		.with_timeout(3)
+		.send()
+		.unwrap();
+	if response.status_code == 200 {
+		let result: Value = serde_json::from_str(response.as_str().unwrap())
+			.expect(&format!("Unable to parse json: {:?}", response));
+		if result["next_action"] != "idle" {
+			let action: Action = serde_json::from_value(result["next_action"].to_owned())
+				.expect(&format!("Unable to parse json: {:?}", result));
+			return action;
+		}
+	}
+	Action{value: String::from("idle")}
+}
+
 
 fn help() {
 	println!("
@@ -151,4 +243,9 @@ fn help() {
 		 scanner_restart <COM-Port>                Restart Scanner mode
 	");
 	process::exit(0);
+}
+
+fn get_api_endpoint() -> String {
+	env::var("CRS_ENDPOINT")
+		.unwrap_or(String::from("http://localhost:8123"))
 }
