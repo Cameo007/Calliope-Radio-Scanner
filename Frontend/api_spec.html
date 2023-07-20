@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Spec CRS Server</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <h1>API Spec CRS Server</h1>
+    <p>
+    <h2><a href="http://212.227.8.25:8123/activate/0">/activate/0</a></h2>
+    This will tell the server that the channel 0 is now being listened on.
+    <h3>Responses:</h3>
+    <h4>Success</h4>
+    <pre>
+        {
+            "success": "Channel was activated."
+        }
+    </pre>
+    <h4>Fail</h4>
+    <pre>
+        {
+            "error": "Channel is already being listened on.",
+            "error_id": 1
+        }
+    </pre>
+    </p>
+    <p>
+    <h2><a href="http://212.227.8.25:8123/loose/0">/loose/0</a></h2>
+    This will tell the server that the channel 0 is no longer being listened on.
+    <h3>Responses:</h3>
+    <h4>Success</h4>
+    <pre>
+        {
+            "success": "Channel was deactivated."
+        }
+    </pre>
+    <h4>Fail</h4>
+    <pre>
+        {
+            "error": "Channel is not being listened on.",
+            "error_id": 2
+        }
+    </pre>
+    </p>
+    <p><h2><a href="http://212.227.8.25:8123/get/0">/get/0</a></h2>
+    This will list all data the server has for the device listening channel 0.
+    <h3>Responses:</h3>
+    <h4>Success</h4>
+    <pre>
+        {
+            "actions": [], // entries data in here is what was given via get args on /action/id
+            "channel": 0
+        }
+    </pre>
+    <h4>Fail</h4>
+    <pre>
+        {
+            "error": "Channel is not being listened on.",
+            "error_id": 2
+        }
+    </pre>
+    </p>
+    <p><h2><a href="http://212.227.8.25:8123/pending/0">/pending/0</a></h2>
+    This will list all pending actions the server has for the device listening channel 0.
+    <h3>Responses:</h3>
+    <h4>Success</h4>
+    <pre>
+        [] // entries data in here is what was given via get args on /action/id
+    </pre>
+    <h4>Fail</h4>
+    <pre>
+        {
+            "error": "Channel is not being listened on.",
+            "error_id": 2
+        }
+    </pre>
+    </p>
+    <p><h2><a href="http://212.227.8.25:8123/pop/0">/pop/0</a></h2>
+    This will give the client the oldest element in the action list and will remove it from the servers storage.
+    <h3>Responses:</h3>
+    <h4>Success</h4>
+    <pre>
+        {
+            "next_action": {} // data in here is what was given via get args on /action/id
+        }
+    </pre>
+    <h4>No Actions Pending</h4>
+    <pre>
+        {
+            "next_action": "idle"
+        }
+    </pre>
+    <h4>Fail</h4>
+    <pre>
+        {
+            "error": "Channel is not being listened on.",
+            "error_id": 2
+        }
+    </pre>
+    </p>
+    <p><h2><a href="http://212.227.8.25:8123/action/0?cmd=send&text=hi">/action/0?cmd=send&text=hi</a></h2>
+    This will add an action to the queue for the device listening channel 0.
+    <h3>Responses:</h3>
+    <h4>Success</h4>
+    <pre>
+        {
+            "action": {
+                // data in here matches get args
+                "cmd": "send",
+                "text": "hi"
+            },
+            "success": "The action was added to the queue"
+        }
+    </pre>
+    <h4>Fail</h4>
+    <pre>
+        {
+            "error": "Channel is not being listened on.",
+            "error_id": 2
+        }
+    </pre>
+    </p>
+    <p><h2><a href="http://212.227.8.25:8123/get">/get</a></h2>
+    This will list all data the server has saved.
+    <h3>Responses:</h3>
+    <h4>Success</h4>
+    <pre>
+        [] // entries are the corresponding /get/id results.
+    </pre>
+    </p>
+    <p><h2><a href="http://212.227.8.25:8123/log/0?type=text&text=hi">/log/0?cmd=send&text=hi</a></h2>
+    This will add a log entry to the list of recoreded signals.
+    <h3>Responses:</h3>
+    <h4>Success</h4>
+    <pre>
+        {
+            "action": {
+                // data in here matches get args
+                "cmd": "send",
+                "text": "hi"
+            },
+            "success": "The action was added to the queue"
+        }
+    </pre>
+    <h4>Fail</h4>
+    <pre>
+        {
+            "error": "Channel is not being listened on.",
+            "error_id": 2
+        }
+    </pre>
+    </p>
+    <p><h2><a href="http://212.227.8.25:8123/logs">/logs</a></h2>
+    This will show the list of recoreded signals.
+    <h3>Responses:</h3>
+    <h4>Success</h4>
+    <pre>
+        {
+            "signals": [] // the format used with the get args
+        }
+    </pre>
+    </p>
+</body>
+
+</html>

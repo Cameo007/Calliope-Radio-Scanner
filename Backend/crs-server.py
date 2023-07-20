@@ -30,7 +30,7 @@ def activate(channel: int):
 def loose(channel: int):
     if tasks.get(channel) is None:
         return {"error": "Channel is not being listened on.", "error_id": 2}
-    tasks[channel] = None
+    del tasks[channel]
     return {"success": "Channel was deactivated."}
 
 
