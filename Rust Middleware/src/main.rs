@@ -96,19 +96,19 @@ fn main() {
 			let log = line.strip_suffix("\n").unwrap();
 			println!("{}", log);
 			log_to_server(log);
+		}
 
-			//Run pending actions
-			if !channel.is_empty() {
-				let new_timestamp = SystemTime::now()
-				.duration_since(UNIX_EPOCH)
-				.unwrap()
-				.as_secs();
+		//Run pending actions
+		if !channel.is_empty() {
+			let new_timestamp = SystemTime::now()
+			.duration_since(UNIX_EPOCH)
+			.unwrap()
+			.as_secs();
 
-				if last_timestamp + 15 < new_timestamp {
-					last_timestamp = new_timestamp;
-					let action = api_get_next_pending_action(&channel);
-					send(com, &action.value);
-				}
+			if last_timestamp + 15 < new_timestamp {
+				last_timestamp = new_timestamp;
+				let action = api_get_next_pending_action(&channel);
+				send(com, &action.value);
 			}
 		}
 	}
