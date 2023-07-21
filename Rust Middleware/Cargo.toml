@@ -1,7 +1,12 @@
 [package]
 name = "crs"
 version = "1.0.0"
+authors = ["Pascal Dietrich <pascal.1.dietrich@hotmail.com>"]
 edition = "2021"
+description = ""
+repository = "https://github.com/Cameo007/Calliope-Radio-Scanner/"
+license = "GPL-3.0"
+keywords = ["calliope-mini", "radio"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
