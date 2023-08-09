@@ -22,8 +22,8 @@ jobs:
       run: cd "Rust Middleware" && cargo build --release --verbose
     - name: Build Windows
       run: cd "Rust Middleware" && cargo build --release --target x86_64-pc-windows-gnu --verbose
-    - name: CWD
-      run: cwd
+    - name: PWD
+      run: pwd
     - name: Prepare Upload (create build folder)
       run: mkdir "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/build"
     - name: Prepare Upload (copy binaries)
