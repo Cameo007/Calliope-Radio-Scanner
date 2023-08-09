@@ -25,7 +25,7 @@ jobs:
     - name: Run tests
       run: cd "Rust Middleware" && cargo test --verbose
     - name: Prepare upload
-      run: mkdir "build" && cp "Rust Middleware/target/aarch64-apple-darwin/release/*" "build/"
+      run: mkdir "build" && cp "Rust Middleware/target/*" "build/"
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3.1.2
       with:
