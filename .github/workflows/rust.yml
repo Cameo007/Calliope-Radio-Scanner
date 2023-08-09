@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
+  build-linux-windows:
 
     runs-on: ubuntu-latest
 
@@ -22,14 +22,34 @@ jobs:
       run: cd "Rust Middleware" && cargo build --release --verbose
     - name: Build Windows
       run: cd "Rust Middleware" && cargo build --release --target x86_64-pc-windows-gnu --verbose
-    - name: PWD
-      run: pwd
+    - name: Run tests
+      run: cargo test --verbose
     - name: Prepare Upload (create build folder)
-      run: mkdir "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/build"
+      run: mkdir "build"
     - name: Prepare Upload (copy binaries)
-      run: mv "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/Rust Middleware/target/release/crs" "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/Rust Middleware/target/x86_64-pc-windows-gnu/release/crs.exe" "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/build/"
+      run: mv "Rust Middleware/target/release/crs" "Rust Middleware/target/x86_64-pc-windows-gnu/release/crs.exe" "build/"
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3.1.2
       with:
         name: "Builds"
-        path: "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/build/*"
+        path: "build/*"
+
+  build-macOS:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build
+      run: cd "Rust Middleware" && cargo build --release --verbose
+    - name: Run tests
+      run: cargo test --verbose
+    - name: Prepare Upload (create build folder)
+      run: mkdir "build"
+    - name: Prepare Upload (copy binaries)
+      run: mv "Rust Middleware/target/release/crs" "Rust Middleware/target/x86_64-pc-windows-gnu/release/crs.exe" "build/"
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: "Builds"
+        path: "build/*"
