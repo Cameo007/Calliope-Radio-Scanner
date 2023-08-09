@@ -25,7 +25,7 @@ jobs:
     - name: Prepare Upload (create build folder)
       run: mkdir "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/build"
     - name: Prepare Upload (copy binaries)
-      run: mkdir "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/build" && mv "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/Rust Middleware/target/release/crs" "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/Rust Middleware/target/x86_64-pc-windows-gnu/release/crs.exe" "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/build/"
+      run: mv "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/Rust Middleware/target/release/crs" "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/Rust Middleware/target/x86_64-pc-windows-gnu/release/crs.exe" "/home/runner/work/Calliope-Radio-Scanner/Calliope-Radio-Scanner/build/"
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3.1.2
       with:
