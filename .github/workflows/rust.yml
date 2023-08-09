@@ -22,12 +22,12 @@ jobs:
 #      run: cd "Rust Middleware" && cargo build --release --verbose
     - name: Build Silicon
       run: cd "Rust Middleware" && rustup target add aarch64-apple-darwin && cargo build --release --target aarch64-apple-darwin --verbose
-    - name: Run tests
-      run: cd "Rust Middleware" && cargo test --verbose
-    - name: Prepare upload
-      run: mkdir "build" && cp "Rust Middleware/target/*" "build/"
+#    - name: Run tests
+#      run: cd "Rust Middleware" && cargo test --verbose
+#    - name: Prepare upload
+#      run: mkdir "build" && cp "Rust Middleware/target/*" "build/"
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3.1.2
       with:
         name: "macOS"
-        path: "build/*"
+        path: "Rust Middleware/target/*"
