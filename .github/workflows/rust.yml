@@ -10,7 +10,29 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build-linux-windows:
+  build-linux:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup
+      run: sudo apt-get install libudev-dev
+    - name: Build Linux
+      run: cd "Rust Middleware" && cargo build --release --verbose
+    - name: Run tests
+      run: cd "Rust Middleware" && cargo test --verbose
+    - name: Prepare Upload (create build folder)
+      run: mkdir "build"
+    - name: Prepare Upload (copy binaries)
+      run: mv "Rust Middleware/target/release/crs" "build/"
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: "Linux"
+        path: "build/*"
+
+  build-windows:
 
     runs-on: ubuntu-latest
 
@@ -18,20 +40,18 @@ jobs:
     - uses: actions/checkout@v3
     - name: Setup
       run: sudo apt-get install libudev-dev && rustup target add x86_64-pc-windows-gnu && sudo apt-get install gcc-mingw-w64-x86-64
-    - name: Build Linux
-      run: cd "Rust Middleware" && cargo build --release --verbose
     - name: Build Windows
       run: cd "Rust Middleware" && cargo build --release --target x86_64-pc-windows-gnu --verbose
     - name: Run tests
-      run: cargo test --verbose
+      run: cd "Rust Middleware" && cargo test --verbose
     - name: Prepare Upload (create build folder)
       run: mkdir "build"
     - name: Prepare Upload (copy binaries)
-      run: mv "Rust Middleware/target/release/crs" "Rust Middleware/target/x86_64-pc-windows-gnu/release/crs.exe" "build/"
+      run: mv "Rust Middleware/target/x86_64-pc-windows-gnu/release/crs.exe" "build/"
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3.1.2
       with:
-        name: "Builds"
+        name: "Windows"
         path: "build/*"
 
   build-macOS:
@@ -43,13 +63,11 @@ jobs:
     - name: Build
       run: cd "Rust Middleware" && cargo build --release --verbose
     - name: Run tests
-      run: cargo test --verbose
+      run: cd "Rust Middleware" && cargo test --verbose
     - name: Prepare Upload (create build folder)
       run: mkdir "build"
-    - name: Prepare Upload (copy binaries)
-      run: mv "Rust Middleware/target/release/crs" "Rust Middleware/target/x86_64-pc-windows-gnu/release/crs.exe" "build/"
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3.1.2
       with:
-        name: "Builds"
-        path: "build/*"
+        name: "macOS"
+        path: Rust Middleware/target/release/*"
