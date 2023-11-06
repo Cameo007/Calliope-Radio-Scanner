@@ -1,5 +1,8 @@
 # Calliope Radio Scanner
 ### Debug and manipulate the radio traffic between [Calliope minis](https://calliope.cc/)!
+
+# Moved to [Codeberg](https://codeberg.org/Cameo007/Calliope-Radio-Scanner.git)
+
 #### It is 
 - The "antenna", written in Scratch on the Calliope Mini itself.
 - The middleware, written in Rust communicates between the Calliope via USB/serial and the server. But it can also be used without the server.
